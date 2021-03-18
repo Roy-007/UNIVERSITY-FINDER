@@ -8,3 +8,7 @@ https://realpython.com/beautiful-soup-web-scraper-python/
 https://medium.com/@kunal.rustagi/building-a-web-crawler-to-scrape-data-from-multiple-pages-12799103b768
 https://developers.whatismybrowser.com/useragents/explore/software_type_specific/web-browser/
 
+pip install chatterbot
+pip install chatterbot_corpus
+pip install nltk
+pip install chatbotAI
