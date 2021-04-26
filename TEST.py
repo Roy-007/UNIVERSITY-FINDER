@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[22]:
+# In[1]:
 
 
 from selenium.webdriver.common.action_chains import ActionChains
@@ -34,7 +34,7 @@ import re
 import sys
 
 
-# In[23]:
+# In[2]:
 
 
 def scroll(driver, timeout):
@@ -62,11 +62,11 @@ def all_links(url):
     # Setup the driver. This one uses chrome with some options and a path to the chromedriver
     driver = webdriver.Chrome(executable_path='C:\Program Files\chromedriver.exe')
     # implicitly_wait tells the driver to wait before throwing an exception
-    driver.implicitly_wait(100)
+    driver.implicitly_wait(5)
     # driver.get(url) opens the page
     driver.get('https://collegedunia.com/germany-colleges')
     # This starts the scrolling by passing the driver and a timeout
-    scroll(driver, 180)
+    scroll(driver, 5)
     # Once scroll returns bs4 parsers the page_source
     soup = BeautifulSoup(driver.page_source, 'lxml')
     # Them we close the driver as soup_a is storing the page source
@@ -105,18 +105,18 @@ def all_links(url):
                     #print(price.text)
                     all1.append(scores.text)
                 else:
-                    all1.append('-*-')     
+                    all1.append('N/A')     
 
                 if price is not None:
                     #print(price.text)
                     all1.append(price.text)
                 else:
-                    all1.append('-*-')
+                    all1.append('N/A')
                 alls.append(all1)    
     return alls
 
 
-# In[24]:
+# In[3]:
 
 
 results = []
@@ -124,20 +124,108 @@ for i in range(1):
     results.append(all_links(i))
 flatten = lambda l: [item for sublist in l for item in sublist]
 df = pd.DataFrame(flatten(results),columns=['UNIVERSITY NAME','LOCATION','RATING','SCORES','PRICE'])
+
+#cleaning data for ML and Data Engineering. 
+
+df["UNIVERSITY NAME"] = df["UNIVERSITY NAME"].str.replace(',', '')
+df['UNIVERSITY NAME'] = pd.to_numeric(df['UNIVERSITY NAME'], errors='ignore')
+
+df["LOCATION"] = df["LOCATION"].str.replace(',', '')
+df["LOCATION"] = df["LOCATION"].str.replace('germany', '')
+
+df['RATING'] = df['RATING'].str.replace('/', '')
+df['RATING'] = df['RATING'].str.replace('10', '')
+
+df['PRICE'] = df['PRICE'].str.extract('([0-9][,.]*[0-9]*)')
+#df['PRICE'] = df['PRICE'].apply(lambda x: find_number(x))
+
+df[['GREGMAT','IELTSTOEFL']] = df.SCORES.str.split("|",expand=True)
+
 df.to_csv('germany.csv', index=False, encoding='utf-8')
 
 
-# In[25]:
+# In[4]:
 
 
 df = pd.read_csv("germany.csv")
 df.shape
 
 
+# In[14]:
+
+
+df.head(10)
+
+
+# In[6]:
+
+
+df.dtypes
+
+
+# In[23]:
+
+
+data = df.sort_values(["RATING"], axis=0, ascending=False)[:75]
+data
+
+
+# In[24]:
+
+
+from bokeh.models import ColumnDataSource
+from bokeh.transform import dodge
+import math
+from bokeh.io import curdoc
+curdoc().clear()
+from bokeh.io import push_notebook, show, output_notebook
+from bokeh.layouts import row
+from bokeh.plotting import figure
+from bokeh.transform import factor_cmap
+from bokeh.models import Legend
+output_notebook()
+
+
+# In[25]:
+
+
+p = figure(x_range=data.iloc[:,0], plot_width=800, plot_height=550, title="Authors Highest Priced Book", toolbar_location=None, tools="")
+
+p.vbar(x=data.iloc[:,0], top=data.iloc[:,2], width=0.9)
+
+p.xgrid.grid_line_color = None
+p.y_range.start = 0
+p.xaxis.major_label_orientation = math.pi/2
+
+
 # In[26]:
 
 
-df.head(50)
+show(p)
+
+
+# In[27]:
+
+
+data = df.sort_values(["PRICE"], axis=0, ascending=False)[:75]
+data
+
+
+# In[28]:
+
+
+p = figure(x_range=data.iloc[:,0], plot_width=800, plot_height=550, title="Authors Highest Priced Book", toolbar_location=None, tools="")
+
+p.vbar(x=data.iloc[:,0], top=data.iloc[:,4], width=0.9)
+p.xgrid.grid_line_color = None
+p.y_range.start = 0
+p.xaxis.major_label_orientation = math.pi/2
+
+
+# In[29]:
+
+
+show(p)
 
 
 # In[ ]:
